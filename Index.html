@@ -75,6 +75,17 @@
   .pagination button {
     margin: 0 0.25rem;
   }
+  /* Admin login modal styles */
+  #adminLoginModal {
+    position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(0,0,0,0.7); 
+    display:flex; align-items:center; justify-content:center; z-index: 9999;
+  }
+  #adminLoginModal.hidden {
+    display: none;
+  }
+  #adminLoginModal > div {
+    background:white; padding: 2rem; border-radius: 8px; max-width: 300px; width: 90%;
+  }
 </style>
 </head>
 <body>
@@ -111,22 +122,22 @@
 <div id="adminPanel" class="hidden">
   <h2>Admin Panel</h2>
   <label>Upload Product Image:</label>
-  <!-- Added accept for camera & photo library -->
-  <input type="file" id="productImageInput" accept="image/*" capture="environment" />
+  <!-- Removed capture attribute so both camera & library show on mobile -->
+  <input type="file" id="productImageInput" accept="image/*" />
   <label>Product Name:</label>
   <input type="text" id="productNameInput" />
   <label>Product Description:</label>
   <textarea id="productDescInput"></textarea>
   <label>Product Price (₦):</label>
-  <input type="number" id="productPriceInput" min="0" />
+  <input type="number" id="productPriceInput" min="0" step="0.01" />
   <button id="addProductBtn">Add Product</button>
 
   <hr />
 
   <h3>Customize Website</h3>
   <label>Business Logo:</label>
-  <!-- Added accept for camera & photo library -->
-  <input type="file" id="logoUpload" accept="image/*" capture="environment" />
+  <!-- Same here for logo upload -->
+  <input type="file" id="logoUpload" accept="image/*" />
   <label>Main Color:</label>
   <input type="color" id="colorPickerMain" value="#2a9d8f" />
   <label>Accent Color:</label>
@@ -153,19 +164,20 @@
 </div>
 
 <!-- Admin Login Modal -->
-<div id="adminLoginModal" class="hidden" style="position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center;">
-  <div style="background:white; padding: 2rem; border-radius: 8px; max-width: 300px; width: 90%;">
+<div id="adminLoginModal" class="hidden">
+  <div>
     <h2>Admin Login</h2>
     <input type="password" id="adminPassword" placeholder="Enter password" style="width: 100%; padding: 0.5rem; margin-bottom: 1rem;" />
     <button id="adminLoginSubmitBtn">Login</button>
     <button id="adminLoginCancelBtn" style="margin-left: 1rem;">Cancel</button>
-    <p id="loginError" style="color: red;"></p>
+    <p id="loginError" style="color: red; margin-top: 0.5rem;"></p>
   </div>
 </div>
 
 <a href="#" id="whatsappContact" target="_blank" class="hidden">WhatsApp Us</a>
 
 <script>
+  // Data & state
   let products = JSON.parse(localStorage.getItem('ee_products')) || [];
   let customization = JSON.parse(localStorage.getItem('ee_customization')) || {
     mainColor: '#2a9d8f',
@@ -178,12 +190,10 @@
     customMessage: '',
   };
   let cart = JSON.parse(localStorage.getItem('ee_cart')) || [];
-  let adminLoggedIn = false;
-  const adminPassword = 'admin123';
+  let adminLoggedIn = JSON.parse(localStorage.getItem('ee_adminLoggedIn')) || false;
+  const adminPassword = 'admin123'; // change password here
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const isShopMode = urlParams.get('shop') === 'true';
-
+  // Elements
   const adminLoginBtn = document.getElementById('adminLoginBtn');
   const adminLogoutBtn = document.getElementById('adminLogoutBtn');
   const adminLoginModal = document.getElementById('adminLoginModal');
@@ -222,12 +232,19 @@
   const productsPerPage = 6;
   let currentPage = 1;
 
+  // Determine if URL has ?shop=true to show only shopping area (no admin)
+  const urlParams = new URLSearchParams(window.location.search);
+  const isShopMode = urlParams.get('shop') === 'true';
+
+  // Save all data to localStorage
   function saveData() {
     localStorage.setItem('ee_products', JSON.stringify(products));
     localStorage.setItem('ee_customization', JSON.stringify(customization));
     localStorage.setItem('ee_cart', JSON.stringify(cart));
+    localStorage.setItem('ee_adminLoggedIn', JSON.stringify(adminLoggedIn));
   }
 
+  // Render products with pagination
   function renderProducts() {
     productGrid.innerHTML = '';
     if(products.length === 0){
@@ -252,6 +269,7 @@
       productGrid.appendChild(card);
     });
 
+    // Pagination buttons
     const totalPages = Math.ceil(products.length / productsPerPage);
     paginationDiv.innerHTML = '';
     if(totalPages > 1){
@@ -268,10 +286,12 @@
     }
   }
 
+  // Update cart count in header
   function updateCartCount() {
     cartCount.textContent = cart.length;
   }
 
+  // Add product to cart by index
   function addToCart(index) {
     cart.push(products[index]);
     updateCartCount();
@@ -279,21 +299,23 @@
     alert('Product added to cart!');
   }
 
+  // Show checkout section
   function showCheckout() {
     customerView.innerHTML = '';
     checkoutSection.classList.remove('hidden');
     bankDetailsDisplay.textContent = customization.bankDetails || 'No bank details provided.';
   }
 
+  // Hide checkout and go back to product grid
   function hideCheckout() {
     checkoutSection.classList.add('hidden');
-    // Restore productGrid and pagination inside customerView
     customerView.innerHTML = '';
     customerView.appendChild(productGrid);
     customerView.appendChild(paginationDiv);
     customerView.appendChild(document.getElementById('messageBox'));
   }
 
+  // Update color pickers and other customization UI with current data
   function updateCustomizationUI() {
     colorPickerMain.value = customization.mainColor;
     colorPickerAccent.value = customization.accentColor;
@@ -308,6 +330,7 @@
     renderMessage();
   }
 
+  // Update CSS variables for theme colors
   function updateThemeColors() {
     document.documentElement.style.setProperty('--main-color', customization.mainColor);
     document.documentElement.style.setProperty('--accent-color', customization.accentColor);
@@ -315,6 +338,7 @@
     document.documentElement.style.setProperty('--text-color', customization.textColor);
   }
 
+  // Show or hide WhatsApp contact button and set link
   function updateWhatsAppContact() {
     if(customization.whatsapp){
       const cleanNum = customization.whatsapp.replace(/\D/g,'');
@@ -325,10 +349,26 @@
     }
   }
 
+  // Show custom message to customers
   function renderMessage() {
     const messageBox = document.getElementById('messageBox');
     messageBox.textContent = customization.customMessage;
   }
+
+  // Show or hide admin UI based on login state
+  function updateAdminUI() {
+    if(adminLoggedIn){
+      adminLoginBtn.classList.add('hidden');
+      adminLogoutBtn.classList.remove('hidden');
+      adminPanel.classList.remove('hidden');
+    } else {
+      adminLoginBtn.classList.remove('hidden');
+      adminLogoutBtn.classList.add('hidden');
+      adminPanel.classList.add('hidden');
+    }
+  }
+
+  // Event Listeners
 
   adminLoginBtn.addEventListener('click', () => {
     adminLoginModal.classList.remove('hidden');
@@ -344,10 +384,9 @@
     const enteredPassword = adminPasswordInput.value.trim();
     if (enteredPassword === adminPassword) {
       adminLoggedIn = true;
+      localStorage.setItem('ee_adminLoggedIn', JSON.stringify(true));
       adminLoginModal.classList.add('hidden');
-      adminLoginBtn.classList.add('hidden'); // hide login button on success
-      adminLogoutBtn.classList.remove('hidden');
-      adminPanel.classList.remove('hidden');
+      updateAdminUI();
       updateCartCount();
       updateCustomizationUI();
       renderProducts();
@@ -358,11 +397,10 @@
 
   adminLogoutBtn.addEventListener('click', () => {
     adminLoggedIn = false;
-    adminLoginBtn.classList.remove('hidden');
-    adminLogoutBtn.classList.add('hidden');
-    adminPanel.classList.add('hidden');
-    updateCartCount();
+    localStorage.setItem('ee_adminLoggedIn', JSON.stringify(false));
+    updateAdminUI();
     renderProducts();
+    updateCartCount();
   });
 
   addProductBtn.addEventListener('click', () => {
@@ -401,21 +439,22 @@
     customization.accentColor = colorPickerAccent.value;
     customization.bgColor = colorPickerBg.value;
     customization.textColor = colorPickerText.value;
-    if(logoUpload.files.length > 0){
-      const reader = new FileReader();
-      reader.onload = function(e){
-        customization.logoDataUrl = e.target.result;
-        siteLogo.src = customization.logoDataUrl;
-        saveData();
-      }
-      reader.readAsDataURL(logoUpload.files[0]);
-    }
-    customization.whatsapp = whatsappInput.value.trim();
     customization.bankDetails = bankInput.value.trim();
+    customization.whatsapp = whatsappInput.value.trim();
     saveData();
-    updateThemeColors();
-    updateWhatsAppContact();
+    updateCustomizationUI();
     alert('Customization saved!');
+  });
+
+  logoUpload.addEventListener('change', () => {
+    if(logoUpload.files.length === 0) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      customization.logoDataUrl = e.target.result;
+      siteLogo.src = customization.logoDataUrl;
+      saveData();
+    };
+    reader.readAsDataURL(logoUpload.files[0]);
   });
 
   saveMessageBtn.addEventListener('click', () => {
@@ -427,62 +466,56 @@
 
   productGrid.addEventListener('click', e => {
     if(e.target.tagName === 'BUTTON'){
-      const index = parseInt(e.target.getAttribute('data-index'));
-      addToCart(index);
+      const idx = parseInt(e.target.getAttribute('data-index'), 10);
+      if(!isNaN(idx)) addToCart(idx);
     }
   });
 
   viewCartBtn.addEventListener('click', () => {
     if(cart.length === 0){
-      alert('Cart is empty!');
+      alert('Your cart is empty!');
       return;
     }
     showCheckout();
   });
 
-  mockPayBtn.addEventListener('click', () => {
-    alert('Thank you for your payment! Your order has been received.');
-    cart = [];
-    updateCartCount();
-    saveData();
-    hideCheckout();
-  });
-
   backToShopBtn.addEventListener('click', () => {
     hideCheckout();
+    renderProducts();
   });
 
-  function init() {
+  mockPayBtn.addEventListener('click', () => {
+    alert('Payment successful! Thank you for your purchase.');
+    cart = [];
+    saveData();
+    updateCartCount();
+    hideCheckout();
+    renderProducts();
+  });
+
+  // Initialization
+  function init(){
     updateThemeColors();
     updateWhatsAppContact();
-    siteLogo.src = customization.logoDataUrl || '';
-    renderProducts();
-    renderMessage();
-    updateCartCount();
+    updateCustomizationUI();
 
-    if (isShopMode) {
-      // Customer shopping mode: hide admin features completely
+    if(isShopMode){
+      // Show only shopping area to customers via shared link
       adminLoginBtn.classList.add('hidden');
       adminLogoutBtn.classList.add('hidden');
       adminPanel.classList.add('hidden');
-      // Show customer view only
       customerView.classList.remove('hidden');
     } else {
-      // Admin mode: show login button or admin panel based on login state
-      if(adminLoggedIn){
-        adminLoginBtn.classList.add('hidden');
-        adminLogoutBtn.classList.remove('hidden');
-        adminPanel.classList.remove('hidden');
-      } else {
-        adminLoginBtn.classList.remove('hidden');
-        adminLogoutBtn.classList.add('hidden');
-        adminPanel.classList.add('hidden');
-      }
+      updateAdminUI();
       customerView.classList.remove('hidden');
     }
+
+    renderProducts();
+    updateCartCount();
   }
 
   init();
+
 </script>
 
 </body>
