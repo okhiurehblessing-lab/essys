@@ -1,0 +1,112 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin • Your Shop</title>
+  <link rel="stylesheet" href="./style.css"/>
+  <script defer type="module" src="./admin.js"></script>
+</head>
+<body>
+  <header class="header container">
+    <div class="brand">
+      <div class="brand-logo">A</div>
+      <div class="brand-title">Admin Dashboard</div>
+    </div>
+    <div class="tools">
+      <button id="previewBtn" class="toggle">Preview Store</button>
+      <button id="logoutBtn" class="toggle">Logout</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card" style="margin:12px 0;">
+      <h3>Stats</h3>
+      <div class="row">
+        <div class="card"><strong>Today</strong><div id="statToday">₦0</div></div>
+        <div class="card"><strong>This Week</strong><div id="statWeek">₦0</div></div>
+        <div class="card"><strong>This Month</strong><div id="statMonth">₦0</div></div>
+        <div class="card"><strong>All-Time Profit</strong><div id="statProfit">₦0</div></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Products</h3>
+      <div class="row">
+        <input id="pName" class="input" placeholder="Name"/>
+        <input id="pPrice" class="input" placeholder="Price (₦)"/>
+      </div>
+      <div class="row">
+        <input id="pCost" class="input" placeholder="Cost (₦ for profit calc)"/>
+        <input id="pStock" class="input" placeholder="Stock qty"/>
+      </div>
+      <textarea id="pDesc" class="input" placeholder="Description"></textarea>
+      <div class="row">
+        <input id="pColors" class="input" placeholder="Colors (one per line)"/>
+        <input id="pSizes" class="input" placeholder="Sizes (one per line)"/>
+      </div>
+      <input id="pImage" class="input" placeholder="Image URL (or upload in Storage)"/>
+      <div class="actions" style="margin-top:8px">
+        <button id="addProductBtn" class="add-btn">Add Product</button>
+      </div>
+      <div id="productList" style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px"></div>
+    </section>
+
+    <section class="card">
+      <h3>Settings</h3>
+      <div class="row">
+        <input id="shopName" class="input" placeholder="Shop name"/>
+        <input id="brandColor" class="input" type="color" value="#0ea5e9"/>
+      </div>
+      <div class="row">
+        <input id="waNumber" class="input" placeholder="WhatsApp number (e.g. 23480xxxxxxx)"/>
+        <select id="defaultTheme" class="input">
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </div>
+      <textarea id="pickupInfo" class="input" placeholder="Pickup location info (address, hours)"></textarea>
+      <textarea id="bankDetailsAdmin" class="input" placeholder="Bank details block shown at checkout (lines)&#10;Bank details:&#10;Account number:&#10;Account name:&#10;Bank name:"></textarea>
+      <div class="actions" style="margin-top:8px">
+        <button id="saveSettings" class="add-btn">Save Settings</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Shipping (States & Fees)</h3>
+      <div class="row">
+        <select id="stateSelectAdmin" class="input"></select>
+        <input id="stateFee" class="input" placeholder="Fee (₦) — leave blank if unknown"/>
+      </div>
+      <div class="actions" style="margin-top:8px">
+        <button id="saveStateFee" class="add-btn">Save/Update Fee</button>
+      </div>
+      <div id="stateFeesList" style="margin-top:10px"></div>
+    </section>
+
+    <section class="card">
+      <h3>Orders</h3>
+      <div id="ordersList"></div>
+      <div class="actions" style="margin-top:8px">
+        <button id="exportAll" class="add-btn">Download Sales Report (All-Time)</button>
+        <button id="exportToday" class="add-btn">Today</button>
+        <button id="exportWeek" class="add-btn">This Week</button>
+        <button id="exportMonth" class="add-btn">This Month</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Auth Gate (simple) -->
+  <div class="modal-mask" id="authMask">
+    <div class="modal">
+      <h2>Admin Login</h2>
+      <input id="adminEmail" class="input" placeholder="Email"/>
+      <input id="adminPass" class="input" placeholder="Password" type="password"/>
+      <div class="actions">
+        <button id="adminLoginBtn" class="add-btn">Login</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
